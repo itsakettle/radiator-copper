@@ -10,6 +10,11 @@
 
     <string name="action_settings">Settings</string>
 
-<!-- TODO: Remove or change this placeholder text -->
-    <string name="hello_blank_fragment">Hello there</string>
+<!-- ClassificationFragment layout -->
+    <string name="classification_fragment_title">Observation Title</string>
+    <string name="classification_fragment_text">MMMMMMMMMMMMMMMMMMMM MMMMMMMMMMMMMMMMMMMM
+        MMMMMMMMMMMMMMMMMMMM MMMMMMMMMMMMMMMMMMMM
+        MMMMMMMMMMMMMMMMMMMM MMMMMMMMMMMMMMMMMMMM
+        MMMMMMMMMMMMMMMMMMMM MMMMMMMMMMMMMMMMMMMM
+    </string>
 </resources>

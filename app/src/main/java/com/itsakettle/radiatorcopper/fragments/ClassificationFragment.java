@@ -1,12 +1,16 @@
 package com.itsakettle.radiatorcopper.fragments;
 
 import android.app.Activity;
+import android.content.Context;
 import android.net.Uri;
 import android.os.Bundle;
 import android.app.Fragment;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
+import android.widget.LinearLayout;
 
 import com.itsakettle.radiatorcopper.R;
 
@@ -17,6 +21,8 @@ import com.itsakettle.radiatorcopper.R;
  * create an instance of this fragment.
  */
 public class ClassificationFragment extends Fragment {
+
+    private static final String TAG = "ClassificationFragment";
     // TODO: Rename parameter arguments, choose names that match
     // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
     private static final String ARG_PARAM1 = "param1";
@@ -32,7 +38,6 @@ public class ClassificationFragment extends Fragment {
      *
      * @return A new instance of fragment ClassificationFragment.
      */
-    // TODO: Rename and change types and number of parameters
     public static ClassificationFragment newInstance() {
         return new ClassificationFragment();
     }
@@ -57,20 +62,41 @@ public class ClassificationFragment extends Fragment {
         return inflater.inflate(R.layout.fragment_classification, container, false);
     }
 
-    // TODO: Rename method, update argument and hook method into UI event
-    public void onButtonPressed(Uri uri) {
-
-    }
-
     @Override
     public void onAttach(Activity activity) {
         super.onAttach(activity);
-
     }
 
     @Override
     public void onDetach() {
         super.onDetach();
+    }
+
+    @Override
+    public void onStart() {
+        super.onStart();
+        String[] initialButtonText = {"nothing","set","yet","Correct"};
+        setNumberOfButtons(initialButtonText);
+    }
+
+    private void setNumberOfButtons(String[] arrButtonText) {
+        Context con = getActivity();
+        LinearLayout llButtons = (LinearLayout) getView().findViewById(
+                R.id.classification_fragment_button_linear_layout);
+        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.MATCH_PARENT,1);
+        try {
+            for (String s : arrButtonText) {
+                Button b = new Button(con);
+                b.setId(View.generateViewId());
+                b.setText(s);
+                b.setLayoutParams(lp);
+                llButtons.addView(b);
+            }
+        }
+        catch (Exception e) {
+            Log.e(TAG,e.getMessage());
+        }
     }
 
 }
