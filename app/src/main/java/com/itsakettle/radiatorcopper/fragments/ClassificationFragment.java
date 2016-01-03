@@ -79,6 +79,10 @@ public class ClassificationFragment extends Fragment {
         setNumberOfButtons(initialButtonText);
     }
 
+    /**
+     * Method to set a variable number of buttons, but with no real thought for how they'll look!
+     * @param arrButtonText
+     */
     private void setNumberOfButtons(String[] arrButtonText) {
         Context con = getActivity();
         LinearLayout llButtons = (LinearLayout) getView().findViewById(
