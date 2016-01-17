@@ -14,6 +14,20 @@ import android.widget.LinearLayout;
 
 import com.itsakettle.radiatorcopper.R;
 
+import java.io.BufferedInputStream;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.URL;
+import java.security.KeyStore;
+import java.security.cert.Certificate;
+import java.security.cert.CertificateFactory;
+import java.security.cert.X509Certificate;
+
+import javax.net.ssl.HttpsURLConnection;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.TrustManagerFactory;
+
 /**
  * A simple {@link Fragment} subclass.
  * Activities that contain this fragment must implement the
@@ -75,12 +89,13 @@ public class ClassificationFragment extends Fragment {
     @Override
     public void onStart() {
         super.onStart();
-        String[] initialButtonText = {"nothing","set","yet","Correct"};
+        String[] initialButtonText = {"nothing", "set", "yet", "Correct"};
         setNumberOfButtons(initialButtonText);
     }
 
     /**
      * Method to set a variable number of buttons, but with no real thought for how they'll look!
+     *
      * @param arrButtonText
      */
     private void setNumberOfButtons(String[] arrButtonText) {
@@ -88,7 +103,7 @@ public class ClassificationFragment extends Fragment {
         LinearLayout llButtons = (LinearLayout) getView().findViewById(
                 R.id.classification_fragment_button_linear_layout);
         LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT,
-                LinearLayout.LayoutParams.MATCH_PARENT,1);
+                LinearLayout.LayoutParams.MATCH_PARENT, 1);
         try {
             for (String s : arrButtonText) {
                 Button b = new Button(con);
@@ -97,10 +112,54 @@ public class ClassificationFragment extends Fragment {
                 b.setLayoutParams(lp);
                 llButtons.addView(b);
             }
+        } catch (Exception e) {
+            Log.e(TAG, e.getMessage());
         }
-        catch (Exception e) {
-            Log.e(TAG,e.getMessage());
+    }
+
+    /**
+     * Method to generate the ssl context that must be passed to the Boiler room class.
+     *
+     * Got more or less all of this from
+     * http://developer.android.com/training/articles/security-ssl.html
+     * @return An SSLContext
+     * @throws java.security.cert.CertificateException
+     * @throws IOException
+     * @throws java.security.KeyStoreException
+     * @throws java.security.NoSuchAlgorithmException
+     * @throws java.security.KeyManagementException
+     */
+    private SSLContext SSLContext()
+            throws java.security.cert.CertificateException, IOException,
+            java.security.KeyStoreException, java.security.NoSuchAlgorithmException,
+            java.security.KeyManagementException {
+        CertificateFactory cf = CertificateFactory.getInstance("X.509");
+        // From https://www.washington.edu/itconnect/security/ca/load-der.crt
+        InputStream caInput = getResources().openRawResource(R.raw.itsakettle_cert);
+        Certificate ca;
+
+        try {
+            ca = cf.generateCertificate(caInput);
+            System.out.println("ca=" + ((X509Certificate) ca).getSubjectDN());
+        } finally {
+            caInput.close();
         }
+
+        // Create a KeyStore containing our trusted CAs
+        String keyStoreType = KeyStore.getDefaultType();
+        KeyStore keyStore = KeyStore.getInstance(keyStoreType);
+        keyStore.load(null, null);
+        keyStore.setCertificateEntry("ca", ca);
+
+        // Create a TrustManager that trusts the CAs in our KeyStore
+        String tmfAlgorithm = TrustManagerFactory.getDefaultAlgorithm();
+        TrustManagerFactory tmf = TrustManagerFactory.getInstance(tmfAlgorithm);
+        tmf.init(keyStore);
+
+        // Create an SSLContext that uses our TrustManager
+        SSLContext context = SSLContext.getInstance("TLS");
+        context.init(null, tmf.getTrustManagers(), null);
+        return context;
     }
 
 }

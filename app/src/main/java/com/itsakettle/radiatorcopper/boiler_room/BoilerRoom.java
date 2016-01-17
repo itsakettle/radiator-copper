@@ -1,16 +1,28 @@
 package com.itsakettle.radiatorcopper.boiler_room;
 
+import android.content.res.Resources;
+
+import com.itsakettle.radiatorcopper.R;
+
 import java.io.BufferedInputStream;
 import java.io.BufferedReader;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.security.KeyStore;
 import java.security.cert.Certificate;
+import java.security.cert.CertificateFactory;
+import java.security.cert.X509Certificate;
 import java.util.HashMap;
 import javax.net.ssl.HttpsURLConnection;
+import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLPeerUnverifiedException;
+import javax.net.ssl.TrustManagerFactory;
+
+import org.json.*;
 
 /**
  * Class to talk to BoilerRoom API
@@ -19,35 +31,41 @@ import javax.net.ssl.SSLPeerUnverifiedException;
 public class BoilerRoom {
 
     private static final String URLENDBIT = "boilerroom.itsakettle.com";
-    private static final String CHARSET =  java.nio.charset.StandardCharsets.UTF_8.name();
-    private static final String USERAGENT = "radiator-copper";
+    private static final String CHARSET = java.nio.charset.StandardCharsets.UTF_8.name();
+    private static final String USERAGENT = "Boiler Room";
 
-    public static BoilerRoomObservation getNextObservation(int projectId,
-                                                           String username,
-                                                           String password)
-            throws IOException
-    {
-        String url = username + ":" + password + "@" + URLENDBIT;
-        URL urlObj = new URL(url);
-        HttpsURLConnection httpsCon = (HttpsURLConnection) urlObj.openConnection();
-        httpsCon.setRequestMethod("GET");
-        httpsCon.setRequestProperty("User-Agent",USERAGENT);
+    private SSLContext sslContext;
+
+    public BoilerRoom(SSLContext sslContext) {
+        this.sslContext = sslContext;
+    }
+
+    public BoilerRoomObservation nextObservation(int projectId,
+                                                 String username,
+                                                 String password)
+            throws IOException, JSONException {
+        BoilerRoomObservation bro = null;
+        String url = URLENDBIT + "next_observation/" + projectId ;
+        HttpsURLConnection httpsCon = httpsConGet(url, username, password);
+
         try {
             BufferedReader r = new BufferedReader(new InputStreamReader(httpsCon.getInputStream()));
+
+            // Possible overkill using StringBuilder instead of concatenation
             StringBuilder builder = new StringBuilder();
             String oneLine;
             do {
                 oneLine = r.readLine();
                 builder.append(oneLine);
             } while (oneLine != null);
-        }
-        finally {
+
+            bro = new BoilerRoomObservation(projectId, new JSONObject(builder.toString()));
+
+        } finally {
             httpsCon.disconnect();
         }
 
-        // Next parse the json
-
-        
+        return bro;
 
 
     }
@@ -56,55 +74,30 @@ public class BoilerRoom {
 
     }
 
-    public class BoilerRoomObservation {
+    private HttpsURLConnection httpsConGet(String url,String username, String password)
+            throws IOException {
 
-        private int projectId;
-        private int observationId;
-        private String text;
-        private HashMap<Integer,String> choices;
-
-        public BoilerRoomObservation(int projectId,
-                                     int observationId,
-                                     String text,
-                                     HashMap<Integer,String> choices) {
-            this.setProjectId(projectId);
-            this.setObservationId(observationId);
-            this.setText(text);
-            this.setChoices(choices);
-        }
-
-
-        public int getProjectId() {
-            return projectId;
-        }
-
-        public void setProjectId(int projectId) {
-            this.projectId = projectId;
-        }
-
-        public int getObservationId() {
-            return observationId;
-        }
-
-        public void setObservationId(int observationId) {
-            this.observationId = observationId;
-        }
-
-        public String getText() {
-            return text;
-        }
-
-        public void setText(String text) {
-            this.text = text;
-        }
-
-        public HashMap<Integer, String> getChoices() {
-            return choices;
-        }
-
-        public void setChoices(HashMap<Integer, String> choices) {
-            this.choices = choices;
-        }
+        URL urlObj = new URL("https://" + username + ":" + password + "@" + url);
+        HttpsURLConnection httpsCon = (HttpsURLConnection) urlObj.openConnection();
+        httpsCon.setSSLSocketFactory(sslContext.getSocketFactory());
+        httpsCon.setRequestMethod("GET");
+        httpsCon.setRequestProperty("User-Agent", USERAGENT);
+        return httpsCon;
     }
+
+    private HttpsURLConnection httpsConPost(String url,String username, String password)
+            throws IOException {
+
+        URL urlObj = new URL("https://" + username + ":" + password + "@" + url);
+        HttpsURLConnection httpsCon = (HttpsURLConnection) urlObj.openConnection();
+        httpsCon.setSSLSocketFactory(sslContext.getSocketFactory());
+        httpsCon.setRequestMethod("POST");
+        httpsCon.setRequestProperty("User-Agent", USERAGENT);
+        return httpsCon;
+    }
+
+
+
+
 
 }
