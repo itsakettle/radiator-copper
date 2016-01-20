@@ -2,7 +2,6 @@ package com.itsakettle.radiatorcopper.fragments;
 
 import android.app.Activity;
 import android.content.Context;
-import android.net.Uri;
 import android.os.Bundle;
 import android.app.Fragment;
 import android.util.Log;
@@ -11,20 +10,20 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.LinearLayout;
+import android.widget.TextView;
 
 import com.itsakettle.radiatorcopper.R;
+import com.itsakettle.radiatorcopper.boilerroom.BoilerRoom;
+import com.itsakettle.radiatorcopper.boilerroom.BoilerRoomObservation;
 
-import java.io.BufferedInputStream;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.URL;
 import java.security.KeyStore;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
+import java.util.HashMap;
 
-import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManagerFactory;
 
@@ -37,14 +36,9 @@ import javax.net.ssl.TrustManagerFactory;
 public class ClassificationFragment extends Fragment {
 
     private static final String TAG = "ClassificationFragment";
-    // TODO: Rename parameter arguments, choose names that match
-    // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
-    private static final String ARG_PARAM1 = "param1";
-    private static final String ARG_PARAM2 = "param2";
 
-    // TODO: Rename and change types of parameters
-    private String mParam1;
-    private String mParam2;
+    private SSLContext ssl;
+    private TextView tvText;
 
     /**
      * Use this factory method to create a new instance of
@@ -63,10 +57,15 @@ public class ClassificationFragment extends Fragment {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        if (getArguments() != null) {
-            mParam1 = getArguments().getString(ARG_PARAM1);
-            mParam2 = getArguments().getString(ARG_PARAM2);
+        try {
+            this.ssl = sslContext();
+        } catch(Exception e) {
+            Log.e(TAG,e.getMessage());
         }
+
+        this.tvText = (TextView) getView().findViewById(R.id.classification_fragment_text);
+
+
     }
 
     @Override
@@ -117,6 +116,15 @@ public class ClassificationFragment extends Fragment {
         }
     }
 
+    private void loadNextObservation() {
+        // First get the boilerroom observation
+        BoilerRoom br = new BoilerRoom(ssl);
+        BoilerRoomObservation bro = br.nextObservation(,,);
+        HashMap<Integer, String> choices = bro.getChoices();
+        setNumberOfButtons((String[]) choices.values().toArray());
+        tvText.setText(bro.getText());
+    }
+
     /**
      * Method to generate the ssl context that must be passed to the Boiler room class.
      *
@@ -129,7 +137,7 @@ public class ClassificationFragment extends Fragment {
      * @throws java.security.NoSuchAlgorithmException
      * @throws java.security.KeyManagementException
      */
-    private SSLContext SSLContext()
+    private SSLContext sslContext()
             throws java.security.cert.CertificateException, IOException,
             java.security.KeyStoreException, java.security.NoSuchAlgorithmException,
             java.security.KeyManagementException {

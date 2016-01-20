@@ -1,26 +1,12 @@
-package com.itsakettle.radiatorcopper.boiler_room;
+package com.itsakettle.radiatorcopper.boilerroom;
 
-import android.content.res.Resources;
-
-import com.itsakettle.radiatorcopper.R;
-
-import java.io.BufferedInputStream;
 import java.io.BufferedReader;
-import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.net.MalformedURLException;
 import java.net.URL;
-import java.security.KeyStore;
-import java.security.cert.Certificate;
-import java.security.cert.CertificateFactory;
-import java.security.cert.X509Certificate;
-import java.util.HashMap;
+
 import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLContext;
-import javax.net.ssl.SSLPeerUnverifiedException;
-import javax.net.ssl.TrustManagerFactory;
 
 import org.json.*;
 
