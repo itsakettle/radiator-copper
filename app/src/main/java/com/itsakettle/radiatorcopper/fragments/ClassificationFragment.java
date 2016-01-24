@@ -2,8 +2,10 @@ package com.itsakettle.radiatorcopper.fragments;
 
 import android.app.Activity;
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.app.Fragment;
+import android.preference.PreferenceManager;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -11,6 +13,7 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.itsakettle.radiatorcopper.R;
 import com.itsakettle.radiatorcopper.boilerroom.BoilerRoom;
@@ -60,11 +63,8 @@ public class ClassificationFragment extends Fragment {
         try {
             this.ssl = sslContext();
         } catch(Exception e) {
-            Log.e(TAG,e.getMessage());
+            Log.e(TAG, "on create get ssl", e);
         }
-
-        this.tvText = (TextView) getView().findViewById(R.id.classification_fragment_text);
-
 
     }
 
@@ -72,7 +72,9 @@ public class ClassificationFragment extends Fragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
-        return inflater.inflate(R.layout.fragment_classification, container, false);
+        View root = inflater.inflate(R.layout.fragment_classification, container, false);
+        this.tvText = (TextView) root.findViewById(R.id.classification_fragment_text);
+        return root;
     }
 
     @Override
@@ -88,8 +90,7 @@ public class ClassificationFragment extends Fragment {
     @Override
     public void onStart() {
         super.onStart();
-        String[] initialButtonText = {"nothing", "set", "yet", "Correct"};
-        setNumberOfButtons(initialButtonText);
+        loadNextObservation();
     }
 
     /**
@@ -112,17 +113,33 @@ public class ClassificationFragment extends Fragment {
                 llButtons.addView(b);
             }
         } catch (Exception e) {
-            Log.e(TAG, e.getMessage());
+            Log.e(TAG,"setNumberOfButtons",e);
         }
     }
 
     private void loadNextObservation() {
         // First get the boilerroom observation
+        SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(this.getActivity());
+        String u = sharedPref.getString(getResources().getString(R.string.username_key), "");
+        String p = sharedPref.getString(getResources().getString(R.string.password_key), "");
+
+        if(u.isEmpty() || p.isEmpty()) {
+            Toast toast = Toast.makeText(this.getActivity(),
+                    "No username or Password", Toast.LENGTH_SHORT);
+            toast.show();
+            return;
+        }
+
         BoilerRoom br = new BoilerRoom(ssl);
-        BoilerRoomObservation bro = br.nextObservation(,,);
-        HashMap<Integer, String> choices = bro.getChoices();
-        setNumberOfButtons((String[]) choices.values().toArray());
-        tvText.setText(bro.getText());
+        try {
+            // Just use project id 1 for the time being...
+            BoilerRoomObservation bro = br.nextObservation(1, u, p);
+            HashMap<Integer, String> choices = bro.getChoices();
+            setNumberOfButtons((String[]) choices.values().toArray());
+            tvText.setText(bro.getText());
+        } catch (Exception e) {
+            Log.e(TAG,"loadNextObservation",e);
+        }
     }
 
     /**
@@ -143,7 +160,7 @@ public class ClassificationFragment extends Fragment {
             java.security.KeyManagementException {
         CertificateFactory cf = CertificateFactory.getInstance("X.509");
         // From https://www.washington.edu/itconnect/security/ca/load-der.crt
-        InputStream caInput = getResources().openRawResource(R.raw.itsakettle_cert);
+        InputStream caInput = getResources().openRawResource(R.raw.itsakettlecert);
         Certificate ca;
 
         try {

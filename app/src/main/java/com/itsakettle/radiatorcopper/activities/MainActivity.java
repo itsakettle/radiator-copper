@@ -16,6 +16,7 @@ import android.support.v4.widget.DrawerLayout;
 import com.itsakettle.radiatorcopper.fragments.ClassificationFragment;
 import com.itsakettle.radiatorcopper.fragments.NavigationDrawerFragment;
 import com.itsakettle.radiatorcopper.R;
+import com.itsakettle.radiatorcopper.fragments.SettingsFragment;
 
 public class MainActivity extends Activity
         implements NavigationDrawerFragment.NavigationDrawerCallbacks {
@@ -93,7 +94,10 @@ public class MainActivity extends Activity
 
         //noinspection SimplifiableIfStatement
         if (id == R.id.action_settings) {
-            return true;
+            FragmentManager fragmentManager = getFragmentManager();
+            fragmentManager.beginTransaction()
+                    .replace(R.id.container, SettingsFragment.newInstance())
+                    .commit();
         }
 
         return super.onOptionsItemSelected(item);
