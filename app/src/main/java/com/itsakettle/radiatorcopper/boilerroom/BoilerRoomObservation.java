@@ -16,19 +16,16 @@ public  class BoilerRoomObservation {
     private String text;
     private HashMap<Integer,String> choices;
 
-    public BoilerRoomObservation(int projectId,
-                                 int observationId,
+    public BoilerRoomObservation(int observationId,
                                  String text,
                                  HashMap<Integer,String> choices) {
-        this.setProjectId(projectId);
         this.setObservationId(observationId);
         this.setText(text);
         this.setChoices(choices);
     }
 
-    public BoilerRoomObservation(int projectId,JSONObject json) throws JSONException {
+    public BoilerRoomObservation(JSONObject json) throws JSONException {
         // parse the json
-        this.projectId = projectId;
         this.observationId = json.getInt("observation_id");
         this.text = json.getString("text");
         JSONArray jaChoices = json.getJSONArray("choices");
@@ -41,15 +38,6 @@ public  class BoilerRoomObservation {
             choices.put(id, description);
         }
 
-    }
-
-
-    public int getProjectId() {
-        return projectId;
-    }
-
-    public void setProjectId(int projectId) {
-        this.projectId = projectId;
     }
 
     public int getObservationId() {

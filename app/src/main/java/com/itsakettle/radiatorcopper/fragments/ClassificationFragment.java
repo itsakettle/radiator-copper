@@ -130,16 +130,14 @@ public class ClassificationFragment extends Fragment {
             return;
         }
 
-        BoilerRoom br = new BoilerRoom(ssl);
-        try {
-            // Just use project id 1 for the time being...
-            BoilerRoomObservation bro = br.nextObservation(1, u, p);
-            HashMap<Integer, String> choices = bro.getChoices();
-            setNumberOfButtons((String[]) choices.values().toArray());
-            tvText.setText(bro.getText());
-        } catch (Exception e) {
-            Log.e(TAG,"loadNextObservation",e);
-        }
+        BoilerRoom br = new BoilerRoom(this, ssl);
+        br.nextObservation(1,u,p);
+    }
+
+
+    public void setTextButtons(String text, String[] choices ) {
+        setNumberOfButtons(choices);
+        tvText.setText(text);
     }
 
     /**

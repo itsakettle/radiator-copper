@@ -1,7 +1,16 @@
 package com.itsakettle.radiatorcopper.boilerroom;
 
+
+import android.app.ProgressDialog;
+import android.os.AsyncTask;
+import android.util.Base64;
+import android.util.Log;
+
+
+import com.itsakettle.radiatorcopper.fragments.ClassificationFragment;
+
 import java.io.BufferedReader;
-import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.URL;
 
@@ -16,43 +25,33 @@ import org.json.*;
  */
 public class BoilerRoom {
 
+    private static final String TAG = "Boiler Room";
     private static final String URLENDBIT = "boilerroom.itsakettle.com";
     private static final String CHARSET = java.nio.charset.StandardCharsets.UTF_8.name();
     private static final String USERAGENT = "Boiler Room";
 
     private SSLContext sslContext;
+    private ClassificationFragment f;
 
-    public BoilerRoom(SSLContext sslContext) {
+    public BoilerRoom(ClassificationFragment f, SSLContext sslContext) {
         this.sslContext = sslContext;
+        this.f = f;
     }
 
-    public BoilerRoomObservation nextObservation(int projectId,
+    public void nextObservation(int projectId,
                                                  String username,
                                                  String password)
-            throws IOException, JSONException {
-        BoilerRoomObservation bro = null;
-        String url = URLENDBIT + "next_observation/" + projectId ;
-        HttpsURLConnection httpsCon = httpsConGet(url, username, password);
+    {
+        URL url = null;
+        String sUrl = "https://" + URLENDBIT + "/next_observation/" + projectId;
 
         try {
-            BufferedReader r = new BufferedReader(new InputStreamReader(httpsCon.getInputStream()));
-
-            // Possible overkill using StringBuilder instead of concatenation
-            StringBuilder builder = new StringBuilder();
-            String oneLine;
-            do {
-                oneLine = r.readLine();
-                builder.append(oneLine);
-            } while (oneLine != null);
-
-            bro = new BoilerRoomObservation(projectId, new JSONObject(builder.toString()));
-
-        } finally {
-            httpsCon.disconnect();
+            url = new URL(sUrl);
+        } catch (Exception e) {
+            Log.e(BoilerRoom.TAG, "Error forming URL", e);
         }
 
-        return bro;
-
+        new HttpsGetTask(f, username, password).execute(url);
 
     }
 
@@ -60,30 +59,78 @@ public class BoilerRoom {
 
     }
 
-    private HttpsURLConnection httpsConGet(String url,String username, String password)
-            throws IOException {
+    private class HttpsGetTask extends AsyncTask<URL, Void, BoilerRoomObservation> {
 
-        URL urlObj = new URL("https://" + username + ":" + password + "@" + url);
-        HttpsURLConnection httpsCon = (HttpsURLConnection) urlObj.openConnection();
-        httpsCon.setSSLSocketFactory(sslContext.getSocketFactory());
-        httpsCon.setRequestMethod("GET");
-        httpsCon.setRequestProperty("User-Agent", USERAGENT);
-        return httpsCon;
+        private ProgressDialog dialog;
+        private ClassificationFragment f;
+        private String username;
+        private String password;
+
+        public HttpsGetTask(ClassificationFragment f, String username, String password) {
+            this.f = f;
+            this.dialog = new ProgressDialog(this.f.getActivity());
+            this.username = username;
+            this.password = password;
+        }
+
+        @Override
+        protected void onPreExecute() {
+            this.dialog.setMessage("interwebbing...");
+            this.dialog.show();
+        }
+
+        @Override
+        protected BoilerRoomObservation doInBackground(URL... urls) {
+            URL url = urls[0];
+            BoilerRoomObservation bro = null;
+            try {
+                HttpsURLConnection httpsCon = (HttpsURLConnection) url.openConnection();
+
+                try {
+                    httpsCon.setSSLSocketFactory(sslContext.getSocketFactory());
+                    String userColonPass = (username + ":" + password);
+                    String authorizationString = "Basic " + Base64.encodeToString(
+                            userColonPass.getBytes(),
+                            Base64.NO_WRAP);
+                    httpsCon.setRequestProperty("Authorization", authorizationString);
+                    httpsCon.setRequestMethod("GET");
+                    httpsCon.setRequestProperty("User-Agent", USERAGENT);
+                    InputStream httpOutput = httpsCon.getInputStream();
+                    BufferedReader r = new BufferedReader(new InputStreamReader(httpOutput));
+
+                    // Possible overkill using StringBuilder instead of concatenation
+                    StringBuilder builder = new StringBuilder();
+                    String oneLine;
+                    do {
+                        oneLine = r.readLine();
+                        builder.append(oneLine);
+                    } while (oneLine != null);
+                    Log.i(TAG,builder.toString());
+                    bro = new BoilerRoomObservation(new JSONObject(builder.toString()));
+
+                } catch (Exception e) {
+                    Log.e(BoilerRoom.TAG, "Error setting connection params", e);
+                } finally {
+                    httpsCon.disconnect();
+                }
+            } catch (Exception e) {
+                Log.e(BoilerRoom.TAG, "Error getting https connection", e);
+            }
+
+            return bro;
+
+        }
+
+        protected void onPostExecute(BoilerRoomObservation bro) {
+
+            if (dialog.isShowing()) {
+                dialog.dismiss();
+            }
+            f.setTextButtons(bro.getText(), (String[]) bro.getChoices().values().toArray());
+
+        }
+
+
     }
-
-    private HttpsURLConnection httpsConPost(String url,String username, String password)
-            throws IOException {
-
-        URL urlObj = new URL("https://" + username + ":" + password + "@" + url);
-        HttpsURLConnection httpsCon = (HttpsURLConnection) urlObj.openConnection();
-        httpsCon.setSSLSocketFactory(sslContext.getSocketFactory());
-        httpsCon.setRequestMethod("POST");
-        httpsCon.setRequestProperty("User-Agent", USERAGENT);
-        return httpsCon;
-    }
-
-
-
-
 
 }
