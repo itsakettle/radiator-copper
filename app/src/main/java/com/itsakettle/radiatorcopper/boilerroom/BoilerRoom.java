@@ -9,11 +9,9 @@ import android.util.Log;
 
 import com.itsakettle.radiatorcopper.fragments.ClassificationFragment;
 
-import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.net.URL;
 
@@ -43,16 +41,7 @@ public class BoilerRoom {
 
     public void nextObservation(int projectId, String username, String password)
     {
-        URL url = null;
-        String sUrl = "https://" + URLENDBIT + "/next_observation/" + projectId;
-
-        try {
-            url = new URL(sUrl);
-        } catch (Exception e) {
-            Log.e(BoilerRoom.TAG, "Error forming URL", e);
-        }
-
-        new HttpsGetTask(f, username, password).execute(url);
+        new NextObservationTask(f, username, password, projectId).execute();
 
     }
 
@@ -69,21 +58,25 @@ public class BoilerRoom {
 
         String json = "{\"observation_id\": " + observationId + ", \"choice_id\": " + choiceId +"}";
 
-        new HttpsPostTask(f,url,username,password).execute(json);
+        new ClassifyTask(f,url,username,password).execute(json);
     }
 
-    private class HttpsGetTask extends AsyncTask<URL, Void, BoilerRoomObservation> {
+    private class NextObservationTask extends AsyncTask<Void, Void, BoilerRoomObservation> {
 
         private ProgressDialog dialog;
         private ClassificationFragment f;
         private String username;
         private String password;
+        private int projectId;
 
-        public HttpsGetTask(ClassificationFragment f, String username, String password) {
+        public NextObservationTask(ClassificationFragment f, String username, String password,
+                                   int projectId) {
             this.f = f;
             this.dialog = new ProgressDialog(this.f.getActivity());
             this.username = username;
             this.password = password;
+            this.projectId = projectId;
+
         }
 
         @Override
@@ -93,8 +86,17 @@ public class BoilerRoom {
         }
 
         @Override
-        protected BoilerRoomObservation doInBackground(URL... urls) {
-            URL url = urls[0];
+        protected BoilerRoomObservation doInBackground(Void... v) {
+
+            URL url = null;
+            String sUrl = "https://" + URLENDBIT + "/next_observation/" + projectId;
+
+            try {
+                url = new URL(sUrl);
+            } catch (Exception e) {
+                Log.e(BoilerRoom.TAG, "Error forming URL", e);
+            }
+
             BoilerRoomObservation bro = null;
             try {
                 HttpsURLConnection httpsCon = (HttpsURLConnection) url.openConnection();
@@ -110,7 +112,7 @@ public class BoilerRoom {
                     httpsCon.setRequestProperty("User-Agent", USERAGENT);
                     InputStream httpOutput = httpsCon.getInputStream();
                     BufferedReader r = new BufferedReader(new InputStreamReader(httpOutput));
-
+                    
                     // Possible overkill using StringBuilder instead of concatenation
                     StringBuilder builder = new StringBuilder();
                     String oneLine;
@@ -147,7 +149,7 @@ public class BoilerRoom {
     }
 
 
-private class HttpsPostTask extends AsyncTask<String, Void, Void> {
+private class ClassifyTask extends AsyncTask<String, Void, Void> {
 
     private ClassificationFragment f;
     private ProgressDialog dialog;
@@ -155,7 +157,7 @@ private class HttpsPostTask extends AsyncTask<String, Void, Void> {
     private String password;
     private URL url;
 
-    public HttpsPostTask(ClassificationFragment f, URL url, String username, String password) {
+    public ClassifyTask(ClassificationFragment f, URL url, String username, String password) {
         this.f = f;
         this.dialog = new ProgressDialog(this.f.getActivity());
         this.username = username;
