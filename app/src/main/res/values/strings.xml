@@ -17,6 +17,7 @@
         MMMMMMMMMMMMMMMMMMMM MMMMMMMMMMMMMMMMMMMM
         MMMMMMMMMMMMMMMMMMMM MMMMMMMMMMMMMMMMMMMM
     </string>
+    <string name="title_settings">Settings</string>
 
     <!-- Preferences -->
     <string name="username_title">Username</string>

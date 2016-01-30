@@ -50,9 +50,17 @@ public class MainActivity extends Activity
     public void onNavigationDrawerItemSelected(int position) {
         // update the main content by replacing fragments
         FragmentManager fragmentManager = getFragmentManager();
-        fragmentManager.beginTransaction()
-                .replace(R.id.container, ClassificationFragment.newInstance())
-                .commit();
+
+        if(position == 0) {
+            fragmentManager.beginTransaction()
+                    .replace(R.id.container, ClassificationFragment.newInstance())
+                    .commit();
+        }
+        else if(position == 1) {
+            fragmentManager.beginTransaction()
+                    .replace(R.id.container, SettingsFragment.newInstance())
+                    .commit();
+        }
     }
 
     public void onSectionAttached(int number) {
@@ -91,15 +99,6 @@ public class MainActivity extends Activity
         // automatically handle clicks on the Home/Up button, so long
         // as you specify a parent activity in AndroidManifest.xml.
         int id = item.getItemId();
-
-        //noinspection SimplifiableIfStatement
-        if (id == R.id.action_settings) {
-            FragmentManager fragmentManager = getFragmentManager();
-            fragmentManager.beginTransaction()
-                    .replace(R.id.container, SettingsFragment.newInstance())
-                    .commit();
-        }
-
         return super.onOptionsItemSelected(item);
     }
 
