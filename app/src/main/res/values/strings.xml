@@ -11,7 +11,7 @@
     <string name="action_settings">Settings</string>
 
 <!-- ClassificationFragment layout -->
-    <string name="classification_fragment_title">Tweet Text</string>
+    <string name="classification_fragment_title">Observation ID: M</string>
     <string name="classification_fragment_text">MMMMMMMMMMMMMMMMMMMM MMMMMMMMMMMMMMMMMMMM
         MMMMMMMMMMMMMMMMMMMM MMMMMMMMMMMMMMMMMMMM
         MMMMMMMMMMMMMMMMMMMM MMMMMMMMMMMMMMMMMMMM

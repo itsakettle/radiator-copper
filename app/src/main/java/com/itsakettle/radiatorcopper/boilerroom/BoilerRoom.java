@@ -14,6 +14,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.net.URL;
+import java.util.HashMap;
 
 import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLContext;
@@ -110,7 +111,23 @@ public class BoilerRoom {
                     httpsCon.setRequestProperty("Authorization", authorizationString);
                     httpsCon.setRequestMethod("GET");
                     httpsCon.setRequestProperty("User-Agent", USERAGENT);
+                    Log.i(TAG, "NextObservationTask Response Code:" + httpsCon.getResponseCode());
+
+                    //Check the response codes
+                    int response = httpsCon.getResponseCode();
+                    switch(response) {
+                        case 204: bro = new BoilerRoomObservation(0, "Nothing Left!",
+                                new HashMap<String,Integer>());
+                            return bro;
+                        case 401: bro = new BoilerRoomObservation(0, "Wrong Creds!",
+                                new HashMap<String,Integer>());
+                            return bro;
+                    }
+
                     InputStream httpOutput = httpsCon.getInputStream();
+
+
+
                     BufferedReader r = new BufferedReader(new InputStreamReader(httpOutput));
                     
                     // Possible overkill using StringBuilder instead of concatenation
@@ -141,6 +158,7 @@ public class BoilerRoom {
             if (dialog.isShowing()) {
                 dialog.dismiss();
             }
+
             f.setBroObservation(bro);
 
         }

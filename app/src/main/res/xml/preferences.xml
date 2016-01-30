@@ -8,6 +8,7 @@
     <EditTextPreference
         android:key="@string/password_key"
         android:title="@string/password_title"
+        android:password="true"
      />
 
 </PreferenceScreen>

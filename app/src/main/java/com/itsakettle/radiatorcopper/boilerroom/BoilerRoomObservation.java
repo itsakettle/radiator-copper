@@ -44,7 +44,7 @@ public  class BoilerRoomObservation {
         return observationId;
     }
 
-    public void setObservationId(int observationId) {
+    private void setObservationId(int observationId) {
         this.observationId = observationId;
     }
 
@@ -52,7 +52,7 @@ public  class BoilerRoomObservation {
         return text;
     }
 
-    public void setText(String text) {
+    private void setText(String text) {
         this.text = text;
     }
 
@@ -60,7 +60,7 @@ public  class BoilerRoomObservation {
         return choices;
     }
 
-    public void setChoices(HashMap<String, Integer> choices) {
+    private void setChoices(HashMap<String, Integer> choices) {
         this.choices = choices;
     }
 }

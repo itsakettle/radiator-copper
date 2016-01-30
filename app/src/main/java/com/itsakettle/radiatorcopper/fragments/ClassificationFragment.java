@@ -42,6 +42,7 @@ public class ClassificationFragment extends Fragment {
 
     private SSLContext ssl;
     private TextView tvText;
+    private TextView tvTitle;
     private BoilerRoomObservation broObservation;
 
     /**
@@ -75,6 +76,7 @@ public class ClassificationFragment extends Fragment {
         // Inflate the layout for this fragment
         View root = inflater.inflate(R.layout.fragment_classification, container, false);
         this.tvText = (TextView) root.findViewById(R.id.classification_fragment_text);
+        this.tvTitle = (TextView) root.findViewById(R.id.classification_fragment_title);
         return root;
     }
 
@@ -105,6 +107,7 @@ public class ClassificationFragment extends Fragment {
         String[] choices = broObservation.getChoices().keySet().toArray(new String[iChoices]);
         Arrays.sort(choices);
         setButtons(choices);
+        tvTitle.setText("Observation ID: " + String.valueOf(broObservation.getObservationId()));
         tvText.setText(broObservation.getText());
     }
 
