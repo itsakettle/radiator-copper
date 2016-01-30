@@ -25,7 +25,7 @@ import java.security.KeyStore;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
-import java.util.HashMap;
+import java.util.Arrays;
 
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManagerFactory;
@@ -42,6 +42,7 @@ public class ClassificationFragment extends Fragment {
 
     private SSLContext ssl;
     private TextView tvText;
+    private BoilerRoomObservation broObservation;
 
     /**
      * Use this factory method to create a new instance of
@@ -93,28 +94,66 @@ public class ClassificationFragment extends Fragment {
         loadNextObservation();
     }
 
+
+    public BoilerRoomObservation getBroObservation() {
+        return broObservation;
+    }
+
+    public void setBroObservation(BoilerRoomObservation broObservation) {
+        this.broObservation = broObservation;
+        int iChoices = broObservation.getChoices().size();
+        String[] choices = broObservation.getChoices().keySet().toArray(new String[iChoices]);
+        Arrays.sort(choices);
+        setButtons(choices);
+        tvText.setText(broObservation.getText());
+    }
+
     /**
      * Method to set a variable number of buttons, but with no real thought for how they'll look!
      *
      * @param arrButtonText
      */
-    private void setNumberOfButtons(String[] arrButtonText) {
+    private void setButtons(String[] arrButtonText) {
         Context con = getActivity();
         LinearLayout llButtons = (LinearLayout) getView().findViewById(
                 R.id.classification_fragment_button_linear_layout);
+        llButtons.removeAllViews();
         LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT,
                 LinearLayout.LayoutParams.MATCH_PARENT, 1);
         try {
             for (String s : arrButtonText) {
+                // Create the button
                 Button b = new Button(con);
                 b.setId(View.generateViewId());
                 b.setText(s);
                 b.setLayoutParams(lp);
                 llButtons.addView(b);
+
+                // Add on click listener
+
+                b.setOnClickListener(new Button.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        Button b = (Button)v;
+                        classify(b.getText().toString());
+                    }
+                });
+
             }
         } catch (Exception e) {
-            Log.e(TAG,"setNumberOfButtons",e);
+            Log.e(TAG,"setButtons",e);
         }
+    }
+
+    private void classify(String choiceKey) {
+        BoilerRoom br = new BoilerRoom(this, ssl);
+        // classify and then load next observation
+        SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(this.getActivity());
+        String u = sharedPref.getString(getResources().getString(R.string.username_key), "");
+        String p = sharedPref.getString(getResources().getString(R.string.password_key), "");
+        br.classify(broObservation.getObservationId(),
+                broObservation.getChoices().get(choiceKey),u,p);
+        loadNextObservation();
     }
 
     private void loadNextObservation() {
@@ -132,12 +171,6 @@ public class ClassificationFragment extends Fragment {
 
         BoilerRoom br = new BoilerRoom(this, ssl);
         br.nextObservation(1,u,p);
-    }
-
-
-    public void setTextButtons(String text, String[] choices ) {
-        setNumberOfButtons(choices);
-        tvText.setText(text);
     }
 
     /**

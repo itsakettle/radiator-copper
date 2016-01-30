@@ -9,9 +9,12 @@ import android.util.Log;
 
 import com.itsakettle.radiatorcopper.fragments.ClassificationFragment;
 
+import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
 import java.net.URL;
 
 import javax.net.ssl.HttpsURLConnection;
@@ -38,9 +41,7 @@ public class BoilerRoom {
         this.f = f;
     }
 
-    public void nextObservation(int projectId,
-                                                 String username,
-                                                 String password)
+    public void nextObservation(int projectId, String username, String password)
     {
         URL url = null;
         String sUrl = "https://" + URLENDBIT + "/next_observation/" + projectId;
@@ -55,8 +56,20 @@ public class BoilerRoom {
 
     }
 
-    public static void classify(int observationId, int choiceId) {
+    public void classify(int observationId, int choiceId, String username, String password) {
+        URL url = null;
 
+        // Try to form URL
+        try {
+            url = new URL("https://" + URLENDBIT + "/classify");
+        } catch (Exception e) {
+            Log.e(BoilerRoom.TAG, "Error forming URL", e);
+            return;
+        }
+
+        String json = "{\"observation_id\": " + observationId + ", \"choice_id\": " + choiceId +"}";
+
+        new HttpsPostTask(f,url,username,password).execute(json);
     }
 
     private class HttpsGetTask extends AsyncTask<URL, Void, BoilerRoomObservation> {
@@ -105,7 +118,7 @@ public class BoilerRoom {
                         oneLine = r.readLine();
                         builder.append(oneLine);
                     } while (oneLine != null);
-                    Log.i(TAG,builder.toString());
+                    Log.i(TAG, builder.toString());
                     bro = new BoilerRoomObservation(new JSONObject(builder.toString()));
 
                 } catch (Exception e) {
@@ -126,11 +139,95 @@ public class BoilerRoom {
             if (dialog.isShowing()) {
                 dialog.dismiss();
             }
-            f.setTextButtons(bro.getText(), (String[]) bro.getChoices().values().toArray());
+            f.setBroObservation(bro);
 
         }
 
 
     }
 
+
+private class HttpsPostTask extends AsyncTask<String, Void, Void> {
+
+    private ClassificationFragment f;
+    private ProgressDialog dialog;
+    private String username;
+    private String password;
+    private URL url;
+
+    public HttpsPostTask(ClassificationFragment f, URL url, String username, String password) {
+        this.f = f;
+        this.dialog = new ProgressDialog(this.f.getActivity());
+        this.username = username;
+        this.password = password;
+        this.url = url;
+    }
+
+    @Override
+    protected void onPreExecute() {
+        this.dialog.setMessage("interwebbing...");
+        this.dialog.show();
+    }
+
+    @Override
+    protected Void doInBackground(String... s) {
+
+        String sJSON = s[0];
+
+        BoilerRoomObservation bro = null;
+        try {
+            HttpsURLConnection httpsCon = (HttpsURLConnection) url.openConnection();
+
+            try {
+                httpsCon.setDoOutput(true);
+                httpsCon.setRequestMethod("POST");
+                httpsCon.setRequestProperty("Content-Length", "" +
+                        Integer.toString(sJSON.getBytes().length));
+                httpsCon.setFixedLengthStreamingMode(sJSON.getBytes().length);
+
+                httpsCon.setSSLSocketFactory(sslContext.getSocketFactory());
+                String userColonPass = (username + ":" + password);
+                String authorizationString = "Basic " + Base64.encodeToString(
+                        userColonPass.getBytes(),
+                        Base64.NO_WRAP);
+
+
+                httpsCon.setRequestProperty("User-Agent", USERAGENT);
+                httpsCon.setRequestProperty("Authorization", authorizationString);
+                httpsCon.setRequestProperty("Content-Type", "application/json");
+
+
+                OutputStreamWriter out = new OutputStreamWriter( httpsCon.getOutputStream());
+                out.write(sJSON);
+                out.flush();
+                out.close();
+
+                Log.i(TAG,"Classify post response: " + httpsCon.getResponseCode());
+
+            } catch (Exception e) {
+                Log.e(BoilerRoom.TAG, "Error setting connection params", e);
+            } finally {
+                httpsCon.disconnect();
+            }
+        } catch (Exception e) {
+            Log.e(BoilerRoom.TAG, "Error getting https connection", e);
+        }
+        return null;
+    }
+
+    @Override
+    protected void onPostExecute(Void v) {
+
+        if (dialog.isShowing()) {
+            dialog.dismiss();
+        }
+
+    }
+
+
 }
+
+}
+
+
+
