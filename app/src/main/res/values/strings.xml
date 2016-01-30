@@ -23,4 +23,8 @@
     <string name="password_title">Password</string>
     <string name="username_key">username</string>
     <string name="password_key">password</string>
+
+    <!-- BoilerRoom -->
+    <string name="boilerroom_bad_creds">Bad Creds!</string>
+    <string name="boilerroom_no_more">"Nothing Left!</string>
 </resources>

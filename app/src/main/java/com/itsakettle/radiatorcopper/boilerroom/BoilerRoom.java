@@ -5,8 +5,10 @@ import android.app.ProgressDialog;
 import android.os.AsyncTask;
 import android.util.Base64;
 import android.util.Log;
+import android.widget.Toast;
 
 
+import com.itsakettle.radiatorcopper.R;
 import com.itsakettle.radiatorcopper.fragments.ClassificationFragment;
 
 import java.io.BufferedReader;
@@ -34,10 +36,14 @@ public class BoilerRoom {
 
     private SSLContext sslContext;
     private ClassificationFragment f;
+    private String sWrongCreds;
+    private String sNothingLeft;
 
     public BoilerRoom(ClassificationFragment f, SSLContext sslContext) {
         this.sslContext = sslContext;
         this.f = f;
+        sWrongCreds = f.getResources().getString(R.string.boilerroom_bad_creds);
+        sNothingLeft = f.getResources().getString(R.string.boilerroom_no_more);
     }
 
     public void nextObservation(int projectId, String username, String password)
@@ -116,10 +122,10 @@ public class BoilerRoom {
                     //Check the response codes
                     int response = httpsCon.getResponseCode();
                     switch(response) {
-                        case 204: bro = new BoilerRoomObservation(0, "Nothing Left!",
+                        case 204: bro = new BoilerRoomObservation(0, sNothingLeft,
                                 new HashMap<String,Integer>());
                             return bro;
-                        case 401: bro = new BoilerRoomObservation(0, "Wrong Creds!",
+                        case 401: bro = new BoilerRoomObservation(0, sWrongCreds,
                                 new HashMap<String,Integer>());
                             return bro;
                     }
@@ -167,7 +173,7 @@ public class BoilerRoom {
     }
 
 
-private class ClassifyTask extends AsyncTask<String, Void, Void> {
+private class ClassifyTask extends AsyncTask<String, Void, Boolean> {
 
     private ClassificationFragment f;
     private ProgressDialog dialog;
@@ -190,11 +196,10 @@ private class ClassifyTask extends AsyncTask<String, Void, Void> {
     }
 
     @Override
-    protected Void doInBackground(String... s) {
+    protected Boolean doInBackground(String... s) {
 
         String sJSON = s[0];
-
-        BoilerRoomObservation bro = null;
+        Boolean success = false;
         try {
             HttpsURLConnection httpsCon = (HttpsURLConnection) url.openConnection();
 
@@ -222,7 +227,13 @@ private class ClassifyTask extends AsyncTask<String, Void, Void> {
                 out.flush();
                 out.close();
 
-                Log.i(TAG,"Classify post response: " + httpsCon.getResponseCode());
+                int response = httpsCon.getResponseCode();
+                Log.i(TAG,"Classify post response: " + response);
+
+                // If something went wrong then tell the user
+                if(response == 200) {
+                    success = true;
+                }
 
             } catch (Exception e) {
                 Log.e(BoilerRoom.TAG, "Error setting connection params", e);
@@ -232,14 +243,20 @@ private class ClassifyTask extends AsyncTask<String, Void, Void> {
         } catch (Exception e) {
             Log.e(BoilerRoom.TAG, "Error getting https connection", e);
         }
-        return null;
+        return success;
     }
 
     @Override
-    protected void onPostExecute(Void v) {
+    protected void onPostExecute(Boolean success) {
 
         if (dialog.isShowing()) {
             dialog.dismiss();
+        }
+
+        if(!success) {
+            Toast toast = Toast.makeText(f.getActivity(),
+                    "Eek...Something went wrong...", Toast.LENGTH_SHORT);
+            toast.show();
         }
 
     }
